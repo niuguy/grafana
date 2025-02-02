@@ -277,21 +277,49 @@
       // Set theme to match system only on startup.
       // Do not react to changes in system theme after startup.
       if (window.grafanaBootData.user.theme === "system") {
+        console.log('Initial theme mode:', window.grafanaBootData.user.theme);
         document.body.classList.remove("theme-system");
+        document.body.classList.add("theme-light");
+        
         var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        console.log('System prefers dark mode:', darkQuery.matches);
+        
         var cssLink = document.createElement("link");
         cssLink.rel = 'stylesheet';
-
-        if (darkQuery.matches) {
-          document.body.classList.add("theme-dark");
-          cssLink.href = window.grafanaBootData.assets.dark;
-          window.grafanaBootData.user.lightTheme = false;
-        } else {
-          document.body.classList.add("theme-light");
-          cssLink.href = window.grafanaBootData.assets.light;
-          window.grafanaBootData.user.lightTheme = true;
-        }
+        cssLink.id = 'theme-css';
+        
+        cssLink.href = window.grafanaBootData.assets.light;
+        window.grafanaBootData.user.lightTheme = true;
         document.head.appendChild(cssLink);
+
+        function setTheme(darkMode) {
+          console.log('Theme changing to:', darkMode ? 'dark' : 'light');
+          var oldLink = document.getElementById('theme-css');
+          if (oldLink) {
+            oldLink.remove();
+          }
+
+          document.body.classList.remove("theme-dark", "theme-light");
+          if (darkMode) {
+            document.body.classList.add("theme-dark");
+            cssLink.href = window.grafanaBootData.assets.dark;
+            window.grafanaBootData.user.lightTheme = false;
+          } else {
+            document.body.classList.add("theme-light");
+            cssLink.href = window.grafanaBootData.assets.light;
+            window.grafanaBootData.user.lightTheme = true;
+          }
+          document.head.appendChild(cssLink);
+          console.log('Current body classes:', document.body.classList.toString());
+          console.log('Current theme CSS:', cssLink.href);
+        }
+
+        setTheme(darkQuery.matches);
+
+        darkQuery.addEventListener('change', function(e) {
+          console.log('System theme preference changed:', e.matches ? 'dark' : 'light');
+          setTheme(e.matches);
+        });
       }
 
       window.__grafana_load_failed = function() {
